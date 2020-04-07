@@ -47,51 +47,14 @@ def get_model(data, learn_rate, epochs, hidden_nodes, b1, b2):
         if (randnum > .5):
             layer2_weights[i] *= -1
 
-    print('Layer 1 weights in beginning:')
-    print(layer1_weights)
-    print('Layer 2 weights in beginning:')
-    print(layer2_weights)
-
     # Begin looping through each epoch
-    for i in range(epochs):
-        print('Epoch: ' + str(i+1))
-        '''
-        row = data[0]
-        actual = row[0]
-        inputs = np.array(row[1:])
-        # First, run the network (forward feed)
-        # Get output value of all hidden nodes first
-        hidden_val_output = forward_feed(layer1_weights, inputs, b1)
-
-        #Feed output forward to calculate output of neural net
-        output_val = forward_feed(layer2_weights, hidden_val_output.T, b2)
-
-        #Now back propogate through to update weights
-        delta_j = sigmoid_derivative(output_val) * (actual - output_val)
-        delta_vals = hidden_val_output
-        for i in range(len(hidden_val_output)):
-            delta_vals[i] = sigmoid_derivative(hidden_val_output[i]) * layer2_weights[i] * delta_j
-
-        #Update weights
-        temp = layer2_weights
-        for i in range(len(layer2_weights)):
-            temp[i] = layer2_weights[i] + (learn_rate * hidden_val_output[i] * delta_j)
-        layer2_weights = temp
-
-        temp = layer1_weights
-        for i in range(len(layer1_weights)):
-            for j in range(len(layer1_weights[0])):
-                temp[i][j] = layer1_weights[i][j] + (learn_rate * inputs[j] * delta_vals[i])
-        layer1_weights = temp
-
-        print(layer1_weights)
-        print(layer2_weights)
-        '''
-        count = 1
+    for epoch in range(1, epochs+1):
+        print('Epoch: ' + str(epoch))
+        row_count = 1
         # Loop through every training example
         for row in data:
-            if (count % 1000 == 0):
-                print('Row: ' + str(count) + ' of ' + str(len(data)))
+            if (row_count % 1000 == 0):
+                print('Row: ' + str(row_count) + ' of ' + str(len(data)))
             actual = row[0]
             inputs = np.array(row[1:])
             # First, run the network (forward feed)
@@ -108,17 +71,35 @@ def get_model(data, learn_rate, epochs, hidden_nodes, b1, b2):
                 delta_vals[i] = sigmoid_derivative(hidden_val_output[i]) * layer2_weights[i] * delta_j
 
             #Update weights
+            # TODO: try and add stopping criteria for weight changes
+            weight_change = list()
             temp = layer2_weights
             for i in range(len(layer2_weights)):
                 temp[i] = layer2_weights[i] + (learn_rate * hidden_val_output[i] * delta_j)
+                if (temp[i] != layer2_weights[i]):
+                    percent_change = (abs(temp[i] - layer2_weights[i]) / ((temp[i] + layer2_weights[i]) / 2)) * 100
+                    weight_change.append(percent_change)
             layer2_weights = temp
 
             temp = layer1_weights
             for i in range(len(layer1_weights)):
                 for j in range(len(layer1_weights[0])):
                     temp[i][j] = layer1_weights[i][j] + (learn_rate * inputs[j] * delta_vals[i])
+                    if (temp[i][j] != layer1_weights[i][j]):
+                        percent_change = (abs(temp[i][j] - layer1_weights[i][j]) / ((temp[i][j] + layer1_weights[i][j]) / 2)) * 100
+                        weight_change.append(percent_change)
             layer1_weights = temp
-            count+=1
+            row_count+=1
+            #Calculate the avg percent change for all weights. If the change is < .1%, hit stopping criteria
+            if (len(weight_change) != 0):
+                avg_change = np.mean(np.array(weight_change))
+            else:
+                avg_change = 1
+            if ((avg_change < .1 and row_count > 500) or (avg_change < .1 and epoch > 1)):
+                print('row_count is: ' + str(row_count))
+                print('we are on epoch: ' + str(epoch))
+                print('Reached stopping criteria - weight change < 0.1%')
+                return layer1_weights, layer2_weights
     return layer1_weights, layer2_weights
 
 def test(test_data, layer1, layer2):
@@ -146,7 +127,7 @@ def test(test_data, layer1, layer2):
         if (prediction == actual):
             correct += 1
 
-    return correct / total
+    return correct / total * 100
 
 def main():
     np.set_printoptions(precision = 5)
@@ -162,14 +143,12 @@ def main():
     epochs = 3
     hidden_nodes = np.zeros(100)
 
-    layer1, layer2 = get_model(train_set, learn_rate, epochs, hidden_nodes, b1, b2)
-    print('Layer 1 weights in end:')
-    print(layer1)
-    print('Layer 2 weights in end:')
-    print(layer2)
+    layer1_weights, layer2_weights = get_model(train_set, learn_rate, epochs, hidden_nodes, b1, b2)
+    np.savetxt('layer1_weights.csv', layer1_weights, delimiter=',')
+    np.savetxt('layer2_weights.csv', layer2_weights, delimiter=',')
 
-    accuracy = test(test_set, layer1, layer2)
-    print('Accuracy of the model is: ')
+    accuracy = test(test_set, layer1_weights, layer2_weights)
+    print('Accuracy (%) of the model is: ')
     print(accuracy)
 
 if __name__== "__main__": main()

@@ -1,2 +1,8 @@
-Accuracy of the model is:
+Accuracy of the 1st model is:
 0.9706855791962175
+
+b1 = -0.3
+b2 = .03
+learn_rate = .5
+epochs = 3
+hidden_nodes = 100

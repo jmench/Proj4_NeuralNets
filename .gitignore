@@ -1,3 +1,7 @@
+# Saved weights
+layer1_weights.csv
+layer2_weights.csv
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
