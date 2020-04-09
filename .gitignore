@@ -1,6 +1,11 @@
 # Saved weights
 layer1_weights.csv
 layer2_weights.csv
+layer1_weights_BONUS.csv
+layer2_weights_BONUS.csv
+
+# personal record
+results.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

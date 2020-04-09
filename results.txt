@@ -1,8 +1,15 @@
 Accuracy of the 1st model is:
-0.9706855791962175
-
+97.06855791962175
 b1 = -0.3
 b2 = .03
 learn_rate = .5
+epochs = 3
+hidden_nodes = 100
+
+Accuracy (%) of the extra credit model is:
+19.06985794901732
+b1 = -.3
+b2 = .03
+learn_rate = 0.5
 epochs = 3
 hidden_nodes = 100
