@@ -59,12 +59,11 @@ def get_summation(layer2_weights, delta_j_vals):
 # returns numpy arrays with dimension x,y that have random values between -1 and 1
 def get_random_weights(x, y):
     weight_arr = np.random.rand(x, y)
-    '''for i in range(x):
+    for i in range(x):
         for j in range(y):
             randnum = random.random()
             if (randnum > .5):
                 weight_arr[i][j] *= -1
-    '''
     return weight_arr
 
 # returns updated weight values
@@ -132,11 +131,8 @@ def test(test_data, layer1, layer2):
         hidden_layer_output = forward_feed(layer1, inputs, 0)
         #Feed output forward to calculate output of neural net without bias
         output_vals = forward_feed(layer2, hidden_layer_output, 0)
-        print(output_vals)
         # Prediction is the index of the output node with largest value
         prediction = np.argmax(output_vals)
-        print('Prediction: ' + str(prediction))
-        print('Actual: ' + str(actual) + '\n')
         # Check if prediction is correct
         if (prediction == actual):
             correct += 1
@@ -148,22 +144,17 @@ def main():
     print('Training could take a while... check back in an hour or two for progress')
 
     #set constants
-    b1 = random.random()
-    b2 = random.random()
+    b1 = -.3
+    b2 = .03
     learn_rate = 0.001
     epochs = 10
     hidden_nodes = 100
 
     layer1_weights, layer2_weights = get_model(train_set, learn_rate, epochs, hidden_nodes, outputs, b1, b2)
 
-    np.savetxt('layer1_weights_1.csv', layer1_weights, delimiter=',')
-    np.savetxt('layer2_weights_2.csv', layer2_weights, delimiter=',')
-
-    #layer1_weights = np.loadtxt('layer1_weights_BONUS.csv', delimiter=',')
-    #layer2_weights = np.loadtxt('layer2_weights_BONUS.csv', delimiter=',')
-
-    print(b1)
-    print(b2)
+    # Can save the weight outputs to a .csv for later use if desired
+    #np.savetxt('layer1_weights_1.csv', layer1_weights, delimiter=',')
+    #np.savetxt('layer2_weights_2.csv', layer2_weights, delimiter=',')
 
     accuracy = test(test_set, layer1_weights, layer2_weights)
     print('Accuracy (%) of the model is: ')
