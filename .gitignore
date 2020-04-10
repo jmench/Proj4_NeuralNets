@@ -1,10 +1,14 @@
-HW4 - CS460.pdf
-*.zip
-layer1_weights_BONUS.csv
-layer2_weights_BONUS.csv
+# Saved weights
 layer1_weights.csv
 layer2_weights.csv
-test.py
+layer1_weights_BONUS.csv
+layer2_weights_BONUS.csv
+
+HW4 - CS460.pdf
+*.zip
+
+# personal record
+results.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
