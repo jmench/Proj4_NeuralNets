@@ -6,6 +6,7 @@ import random
 def read_csv(filename):
     return np.genfromtxt(filename, delimiter=',')
 
+# gets user input to determine what datasets to use
 def get_dataset():
     while(1):
         print('Which dataset do you want to use?')
@@ -27,60 +28,59 @@ def get_dataset():
             print('ERR: INVALID CHOICE.\n')
 
 # calculate the value using sigmoid
-def sigmoid(int):
-    return 1 / (1 + np.exp(-int))
+def sigmoid(num):
+    return 1 / (1 + np.exp(-num * 1.0))
 
 # calculate the value of the derivative of sigmoid (input val from sigmoid)
-def sigmoid_derivative(int):
-    return int * (1 - int)
+def sigmoid_derivative(num):
+    return num * (1 - num)
 
+# runs the network to get output of next layer
 def forward_feed(weights, inputs, bias):
-    # each output is summation of each input val * corresponding weight
-    # output should be 1d array
-    result = np.matmul(weights, inputs)
-    if (type(result) == 'numpy.ndarray'):
-        output = np.zeros(len(result))
-        for i in range(len(result)):
-            output[i] = (sigmoid(result[i]) + bias)
-    else:
-        output = sigmoid(result) + bias
-    return output
+    # outputs holds all output values for Weights x Inputs
+    outputs = np.matmul(weights, inputs)
+    # Run activation function and add bias for each output value
+    for i in range(len(outputs)):
+        outputs[i] = (sigmoid(outputs[i]) + bias)
+    return outputs
 
+# returns an array with summation values for layer2 weight
 def get_summation(layer2_weights, delta_j_vals):
     # need summation value for every hidden node
     summations = np.zeros(len(layer2_weights[0]))
-    # For every hidden node
+    # For every delta value per output node
     for i in range(len(delta_j_vals)):
-        # For every output value
+        # For every hidden node
         for j in range(len(summations)):
             # Add to the summation the product of the layer2_weight at the hidden_node to the output and the delta_j value at the output
             summations[j] += layer2_weights[i][j] * delta_j_vals[i]
     return summations
 
+# returns numpy arrays with dimension x,y that have random values between -1 and 1
+def get_random_weights(x, y):
+    weight_arr = np.random.rand(x, y)
+    '''for i in range(x):
+        for j in range(y):
+            randnum = random.random()
+            if (randnum > .5):
+                weight_arr[i][j] *= -1
+    '''
+    return weight_arr
+
+# returns updated weight values
+def update_weights(weights, learn_rate, node_output_val, delta_vals, x, y):
+    updated_weights = weights
+    for i in range(x):
+        for j in range(y):
+            updated_weights[i][j] = weights[i][j] + (learn_rate * node_output_val[j] * delta_vals[i])
+    return updated_weights
+
 # returns arr of trained weight values
-def get_model(data, learn_rate, epochs, hidden_nodes, outputs, b1, b2):
-    # n = num hidden nodes, m = num inputs, k = num outputs (1 for each output)
-    n = hidden_nodes
-    m = len(data[0]) - 1
-    k = outputs
-
-    # layer1 between input and hidden is n x m matrix
-    # n x m (50 x 784) so you can multiply by the num of inputs
-    layer1_weights = np.random.rand(n, m)
-    for i in range(n):
-        for j in range(m):
-            randnum = random.random()
-            if (randnum > .5):
-                layer1_weights[i][j] *= -1
-
-    # layer2 between hidden and output is k x n matrix
-    layer2_weights = np.random.rand(k, n)
-    for i in range(k):
-        for j in range(n):
-            randnum = random.random()
-            if (randnum > .5):
-                layer2_weights[i][j] *= -1
-
+def get_model(data, learn_rate, epochs, hidden_nodes, num_outputs, b1, b2):
+    num_inputs = len(data[0]) - 1
+    # Get random weights
+    layer1_weights = get_random_weights(hidden_nodes, num_inputs)
+    layer2_weights = get_random_weights(num_outputs, hidden_nodes)
     # Begin looping through each epoch
     for epoch in range(1, epochs+1):
         print('Epoch: ' + str(epoch))
@@ -91,95 +91,79 @@ def get_model(data, learn_rate, epochs, hidden_nodes, outputs, b1, b2):
                 print('Row: ' + str(row_count) + ' of ' + str(len(data)))
             actual = row[0]
             inputs = np.array(row[1:])
+
             # First, run the network (forward feed)
             # Get output value of all hidden nodes first
-            hidden_node_output = forward_feed(layer1_weights, inputs, b1)
+            hidden_layer_output = forward_feed(layer1_weights, inputs, b1)
 
-            #Feed output forward to calculate output of neural net
-            output_vals = forward_feed(layer2_weights, hidden_node_output, b2)
+            #Feed output from hidden layer forward to calculate output of neural net
+            output_vals = forward_feed(layer2_weights, hidden_layer_output, b2)
 
             #Now back propogate through to update weights
-            delta_j_vals = output_vals
-            for i in range(len(output_vals)):
+            # First task is to get delta values for output nodes
+            delta_j_vals = np.zeros(num_outputs)
+            for i in range(num_outputs):
                 delta_j_vals[i] = sigmoid_derivative(output_vals[i]) * (actual - output_vals[i])
 
+            # Use delta j values to get all delta values for hidden nodes
+            delta_i_vals = np.zeros(hidden_nodes)
+            # summations hold the summation value for Weight(hidden,output)*delta_j(output)
             summations = get_summation(layer2_weights, delta_j_vals)
-
-            delta_i_vals = hidden_node_output
-            for i in range(len(hidden_node_output)):
-                delta_i_vals[i] = sigmoid_derivative(hidden_node_output[i]) * summations[i]
+            for i in range(hidden_nodes):
+                delta_i_vals[i] = sigmoid_derivative(hidden_layer_output[i]) * summations[i]
 
             #Update weights
-            # TODO: try and add stopping criteria for weight changes
-            weight_change = list()
-            temp = layer2_weights
-            for i in range(len(layer2_weights)):
-                for j in range(len(layer2_weights[0])):
-                    temp[i][j] = layer2_weights[i][j] + (learn_rate * inputs[j] * delta_j_vals[i])
-                    if (temp[i][j] != layer2_weights[i][j]):
-                        percent_change = (abs(temp[i][j] - layer2_weights[i][j]) / ((temp[i][j] + layer2_weights[i][j]) / 2)) * 100
-                        weight_change.append(percent_change)
-            layer2_weights = temp
+            layer2_weights = update_weights(layer2_weights, learn_rate, hidden_layer_output, delta_j_vals, num_outputs, hidden_nodes)
+            layer1_weights = update_weights(layer1_weights, learn_rate, inputs, delta_i_vals, hidden_nodes, num_inputs)
 
-            temp = layer1_weights
-            for i in range(len(layer1_weights)):
-                for j in range(len(layer1_weights[0])):
-                    temp[i][j] = layer1_weights[i][j] + (learn_rate * inputs[j] * delta_i_vals[i])
-                    if (temp[i][j] != layer1_weights[i][j]):
-                        percent_change = (abs(temp[i][j] - layer1_weights[i][j]) / ((temp[i][j] + layer1_weights[i][j]) / 2)) * 100
-                        weight_change.append(percent_change)
-            layer1_weights = temp
             row_count+=1
-            #Calculate the avg percent change for all weights. If the change is < .1%, hit stopping criteria
-            if (len(weight_change) != 0):
-                avg_change = np.mean(np.array(weight_change))
-            else:
-                avg_change = 1
-            if ((avg_change < .1 and row_count > 500) or (avg_change < .1 and epoch > 1)):
-                print('row_count is: ' + str(row_count))
-                print('we are on epoch: ' + str(epoch))
-                print('Reached stopping criteria - weight change < 0.1%')
-                return layer1_weights, layer2_weights
+        # next row in data set
+    # after all epochs, return final weight values
     return layer1_weights, layer2_weights
 
+# Tests the model against the test dataset to determine accuracy
 def test(test_data, layer1, layer2):
     total = len(test_data)
     correct = 0
-
     for row in test_data:
         actual = row[0]
-        prediction = 0
         inputs = np.array(row[1:])
-        # First, run the network (forward feed)
-        # Get output value of all hidden nodes first
-        hidden_node_output = forward_feed(layer1, inputs, 0)
-
-        #Feed output forward to calculate output of neural net
-        output_vals = forward_feed(layer2, hidden_node_output, 0)
-
-        prediction = np.sum(output_vals)
+        # Get output value of all hidden nodes first without bias
+        hidden_layer_output = forward_feed(layer1, inputs, 0)
+        #Feed output forward to calculate output of neural net without bias
+        output_vals = forward_feed(layer2, hidden_layer_output, 0)
+        print(output_vals)
+        # Prediction is the index of the output node with largest value
+        prediction = np.argmax(output_vals)
         print('Prediction: ' + str(prediction))
         print('Actual: ' + str(actual) + '\n')
-
+        # Check if prediction is correct
         if (prediction == actual):
             correct += 1
-
     return correct / total * 100
 
+# driver for the program
 def main():
     train_set, test_set, outputs = get_dataset()
-    print('Training could take a while... check back in an hour or two for porgress')
+    print('Training could take a while... check back in an hour or two for progress')
 
     #set constants
-    b1 = -.3
-    b2 = .03
-    learn_rate = 0.5
-    epochs = 3
+    b1 = random.random()
+    b2 = random.random()
+    learn_rate = 0.001
+    epochs = 10
     hidden_nodes = 100
 
     layer1_weights, layer2_weights = get_model(train_set, learn_rate, epochs, hidden_nodes, outputs, b1, b2)
-    np.savetxt('layer1_weights_BONUS.csv', layer1_weights, delimiter=',')
-    np.savetxt('layer2_weights_BONUS.csv', layer2_weights, delimiter=',')
+
+    np.savetxt('layer1_weights_1.csv', layer1_weights, delimiter=',')
+    np.savetxt('layer2_weights_2.csv', layer2_weights, delimiter=',')
+
+    #layer1_weights = np.loadtxt('layer1_weights_BONUS.csv', delimiter=',')
+    #layer2_weights = np.loadtxt('layer2_weights_BONUS.csv', delimiter=',')
+
+    print(b1)
+    print(b2)
 
     accuracy = test(test_set, layer1_weights, layer2_weights)
     print('Accuracy (%) of the model is: ')
