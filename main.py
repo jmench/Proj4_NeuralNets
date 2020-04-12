@@ -1,6 +1,8 @@
 #Author: Jordan Menchen
 import numpy as np
 import random
+import time
+from tqdm import tqdm
 
 # read csv file into np array
 def read_csv(filename):
@@ -49,12 +51,12 @@ def get_model(data, learn_rate, epochs, hidden_nodes, b1, b2):
 
     # Begin looping through each epoch
     for i in range(epochs):
-        print('Epoch: ' + str(i+1))
-        count = 1
+        #print('Epoch: ' + str(i+1))
+        #count = 1
         # Loop through every training example
-        for row in data:
-            if (count % 1000 == 0):
-                print('Row: ' + str(count) + ' of ' + str(len(data)))
+        for row in tqdm(data):
+            #if (count % 1000 == 0):
+                #print('Row: ' + str(count) + ' of ' + str(len(data)))
             actual = row[0]
             inputs = np.array(row[1:])
             # First, run the network (forward feed)
@@ -77,13 +79,13 @@ def get_model(data, learn_rate, epochs, hidden_nodes, b1, b2):
                 for j in range(len(layer1_weights[0])):
                     temp[i][j] = layer1_weights[i][j] + (learn_rate * inputs[j] * delta_vals[i])
             layer1_weights = temp
-            count+=1
+            #count+=1
     return layer1_weights, layer2_weights
 
 def test(test_data, layer1, layer2):
     total = len(test_data)
     correct = 0
-    for row in test_data:
+    for row in tqdm(test_data):
         actual = row[0]
         prediction = 0
         inputs = np.array(row[1:])
